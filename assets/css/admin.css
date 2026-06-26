@@ -414,3 +414,45 @@
 .slrm-info-list li strong {
     font-weight: 600;
 }
+
+/* Custom Tags UI styles */
+.slrm-tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+    min-height: 24px;
+}
+
+.slrm-tag-badge {
+    background: rgba(99, 102, 241, 0.08);
+    color: var(--slrm-primary);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.slrm-tag-badge:hover {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: var(--slrm-primary);
+}
+
+.slrm-tag-badge .slrm-remove-tag {
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--slrm-text-muted);
+    transition: color 0.2s ease;
+}
+
+.slrm-tag-badge .slrm-remove-tag:hover {
+    color: hsl(0, 80%, 60%);
+}

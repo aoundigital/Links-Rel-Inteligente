@@ -382,9 +382,18 @@ class Smart_Link_Rel_Manager {
 
             <!-- Palavras-chave para Linkagem Automática -->
             <div class="slrm-metabox-row" style="margin-top: 15px; border-top: 1px solid var(--slrm-border); padding-top: 15px;">
-                <label class="slrm-metabox-label" for="slrm_post_keywords">Palavras-chave Auto-Link</label>
-                <input type="text" class="slrm-input-text" name="slrm_post_keywords" id="slrm_post_keywords" value="<?php echo esc_attr( $keywords ); ?>" placeholder="ex: pão caseiro, receita de pão" style="font-size:12px; padding: 6px 10px;">
-                <p class="slrm-desc" style="margin-top: 4px; font-size:11px;">Insira palavras-chave separadas por vírgula. Outros posts que citarem estes termos criarão links automáticos para este post.</p>
+                <label class="slrm-metabox-label">Palavras-chave Auto-Link</label>
+                
+                <!-- Container de Badges de Tags -->
+                <div class="slrm-tags-container" id="slrm_tags_container"></div>
+                
+                <!-- Input de digitação -->
+                <input type="text" class="slrm-input-text" id="slrm_tag_type_input" placeholder="Digite e aperte Enter..." style="font-size:12px; padding: 6px 10px;">
+                
+                <!-- Input oculto que armazena a string final de palavras-chave separadas por vírgula -->
+                <input type="hidden" name="slrm_post_keywords" id="slrm_post_keywords" value="<?php echo esc_attr( $keywords ); ?>">
+                
+                <p class="slrm-desc" style="margin-top: 6px; font-size:11px;">Digite o termo e aperte **Enter** ou **Vírgula** para adicionar. Depois, clique em **Atualizar** para salvar.</p>
             </div>
         </div>
 
@@ -397,6 +406,81 @@ class Smart_Link_Rel_Manager {
                     el.classList.add('slrm-disabled');
                 }
             }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                var hiddenInput = document.getElementById('slrm_post_keywords');
+                var typeInput = document.getElementById('slrm_tag_type_input');
+                var tagsContainer = document.getElementById('slrm_tags_container');
+                var tagsList = [];
+
+                // Inicializa a lista de tags com base no valor atual do input oculto
+                if (hiddenInput && hiddenInput.value) {
+                    tagsList = hiddenInput.value.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+                }
+
+                function renderTags() {
+                    if (!tagsContainer) return;
+                    tagsContainer.innerHTML = '';
+                    
+                    tagsList.forEach(function(tag, index) {
+                        var badge = document.createElement('div');
+                        badge.className = 'slrm-tag-badge';
+                        badge.innerHTML = '<span>' + escapeHTML(tag) + '</span><span class="slrm-remove-tag" data-index="' + index + '">&times;</span>';
+                        tagsContainer.appendChild(badge);
+                    });
+
+                    // Atualiza o input oculto para salvar via formulário
+                    if (hiddenInput) {
+                        hiddenInput.value = tagsList.join(',');
+                    }
+                }
+
+                function escapeHTML(str) {
+                    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                }
+
+                // Adiciona nova tag
+                function addTag(value) {
+                    var trimmed = value.trim();
+                    if (trimmed && tagsList.indexOf(trimmed) === -1) {
+                        tagsList.push(trimmed);
+                        renderTags();
+                    }
+                }
+
+                if (typeInput) {
+                    typeInput.addEventListener('keydown', function(e) {
+                        // Verifica Enter ou Vírgula
+                        if (e.key === 'Enter' || e.key === ',') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            addTag(typeInput.value);
+                            typeInput.value = '';
+                        }
+                    });
+
+                    // Impede o envio do formulário se o usuário der Enter no input
+                    typeInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                        }
+                    });
+                }
+
+                if (tagsContainer) {
+                    tagsContainer.addEventListener('click', function(e) {
+                        if (e.target.classList.contains('slrm-remove-tag')) {
+                            var index = parseInt(e.target.getAttribute('data-index'), 10);
+                            tagsList.splice(index, 1);
+                            renderTags();
+                        }
+                    });
+                }
+
+                // Renderização inicial
+                renderTags();
+            });
         </script>
         <?php
     }
@@ -405,6 +489,11 @@ class Smart_Link_Rel_Manager {
      * Salva as configurações de Meta Box quando o post é salvo
      */
     public function save_post_meta_box_data( $post_id ) {
+        // Debug POST data
+        if ( isset( $_POST ) && ! empty( $_POST ) ) {
+            error_log( 'SLRM save_post triggered for ID ' . $post_id . ' with POST: ' . print_r( $_POST, true ) );
+        }
+
         // Verifica o nonce
         if ( ! isset( $_POST['slrm_meta_box_nonce'] ) ) {
             return;

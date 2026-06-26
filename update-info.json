@@ -1,0 +1,9 @@
+{
+    "version": "1.0.0",
+    "homepage": "https://github.com/aoundigital/Links-Rel-Inteligente",
+    "download_url": "https://raw.githubusercontent.com/aoundigital/Links-Rel-Inteligente/main/smart-link-rel-manager.zip",
+    "tested": "7.0",
+    "requires": "6.0",
+    "description": "Gerenciador leve e moderno para atributos REL e TARGET de links, com suporte a auto-linker por palavras-chave.",
+    "changelog": "Lançamento estável inicial 1.0.0. Substitui com alta performance os plugins WP External Links e Internal Link Juicer."
+}

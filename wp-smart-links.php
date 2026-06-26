@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name:       Smart Link Rel Manager (Gerenciador de Links Rel Inteligente)
+ * Plugin Name:       WP Smart Links
  * Description:       Gerenciador leve e moderno para atributos REL e TARGET de links internos e externos, com suporte a personalização por post/artigo e atualizações automáticas via JSON remoto.
  * Version:           1.0.0
- * Author:            Antigravity AI
+ * Author:            aoundigital
  * License:           GPLv2 or later
- * Text Domain:       smart-link-rel-manager
+ * Text Domain:       wp-smart-links
  */
 
 // Evita o acesso direto ao arquivo
@@ -19,11 +19,11 @@ if ( ! defined( 'ILJ_VERSION' ) ) {
 }
 
 // URL padrão para checagem de atualizações (pode ser customizada via filtro)
-if ( ! defined( 'SLRM_UPDATE_JSON_URL' ) ) {
-    define( 'SLRM_UPDATE_JSON_URL', 'https://raw.githubusercontent.com/aoundigital/Links-Rel-Inteligente/main/update-info.json' );
+if ( ! defined( 'WPSL_UPDATE_JSON_URL' ) ) {
+    define( 'WPSL_UPDATE_JSON_URL', 'https://raw.githubusercontent.com/aoundigital/Links-Rel-Inteligente/main/update-info.json' );
 }
 
-class Smart_Link_Rel_Manager {
+class WP_Smart_Links {
 
     private static $instance = null;
     private $version = '1.0.0';
@@ -68,9 +68,9 @@ class Smart_Link_Rel_Manager {
      */
     public function enqueue_admin_assets( $hook ) {
         // Enfileira apenas nas páginas do plugin e na edição de posts
-        if ( 'settings_page_smart-link-rel' === $hook || in_array( $hook, array( 'post.php', 'post-new.php' ) ) ) {
+        if ( 'settings_page_wp-smart-links' === $hook || in_array( $hook, array( 'post.php', 'post-new.php' ) ) ) {
             wp_enqueue_style( 'google-font-inter', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', array(), null );
-            wp_enqueue_style( 'slrm-admin-css', plugin_dir_url( __FILE__ ) . 'assets/css/admin.css', array(), $this->version );
+            wp_enqueue_style( 'wpsl-admin-css', plugin_dir_url( __FILE__ ) . 'assets/css/admin.css', array(), $this->version );
         }
     }
 
@@ -80,10 +80,10 @@ class Smart_Link_Rel_Manager {
     public function register_admin_menu() {
         add_submenu_page(
             'options-general.php',
-            'Smart Link Rel Settings',
-            'Smart Link Rel',
+            'WP Smart Links Settings',
+            'WP Smart Links',
             'manage_options',
-            'smart-link-rel',
+            'wp-smart-links',
             array( $this, 'render_settings_page' )
         );
     }
@@ -92,7 +92,7 @@ class Smart_Link_Rel_Manager {
      * Registra as opções globais
      */
     public function register_settings() {
-        register_setting( 'slrm_settings_group', 'slrm_settings' );
+        register_setting( 'wpsl_settings_group', 'wpsl_settings' );
     }
 
     /**
@@ -110,7 +110,7 @@ class Smart_Link_Rel_Manager {
             'internal_rel_custom' => '',
             'additional_internal_domains' => '',
             'excluded_domains' => '',
-            'update_json_url' => SLRM_UPDATE_JSON_URL
+            'update_json_url' => WPSL_UPDATE_JSON_URL
         );
     }
 
@@ -118,7 +118,7 @@ class Smart_Link_Rel_Manager {
      * Retorna uma opção específica fundida com os padrões
      */
     private function get_option( $key ) {
-        $options = get_option( 'slrm_settings', array() );
+        $options = get_option( 'wpsl_settings', array() );
         $defaults = $this->get_default_settings();
         $merged = wp_parse_args( $options, $defaults );
         return isset( $merged[$key] ) ? $merged[$key] : '';
@@ -134,46 +134,46 @@ class Smart_Link_Rel_Manager {
 
         // Exibe mensagem de sucesso se as configurações forem salvas
         if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] ) {
-            echo '<div class="slrm-admin-wrap"><div class="slrm-update-success">Configurações salvas com sucesso!</div></div>';
+            echo '<div class="wpsl-admin-wrap"><div class="wpsl-update-success">Configurações salvas com sucesso!</div></div>';
         }
 
-        $settings = get_option( 'slrm_settings', array() );
+        $settings = get_option( 'wpsl_settings', array() );
         $defaults = $this->get_default_settings();
         $settings = wp_parse_args( $settings, $defaults );
         ?>
-        <div class="slrm-admin-wrap">
-            <div class="slrm-header">
-                <h1>Smart Link Rel Manager</h1>
+        <div class="wpsl-admin-wrap">
+            <div class="wpsl-header">
+                <h1>WP Smart Links</h1>
                 <p>Gerenciador profissional para otimização SEO e usabilidade de links internos e externos.</p>
-                <div class="slrm-version-badge">v<?php echo esc_html( $this->version ); ?></div>
+                <div class="wpsl-version-badge">v<?php echo esc_html( $this->version ); ?></div>
             </div>
 
             <form method="post" action="options.php">
-                <?php settings_fields( 'slrm_settings_group' ); ?>
+                <?php settings_fields( 'wpsl_settings_group' ); ?>
 
-                <div class="slrm-grid">
+                <div class="wpsl-grid">
                     <!-- Coluna Principal -->
-                    <div class="slrm-main-column">
+                    <div class="wpsl-main-column">
                         
                         <!-- Links Externos -->
-                        <div class="slrm-card">
-                            <h2 class="slrm-card-title">
+                        <div class="wpsl-card">
+                            <h2 class="wpsl-card-title">
                                 <span class="dashicons dashicons-admin-links"></span> Links Externos
                             </h2>
                             
-                            <div class="slrm-form-group">
-                                <label class="slrm-label" for="slrm_external_target">Comportamento de Abertura (Target)</label>
-                                <select class="slrm-select" name="slrm_settings[external_target]" id="slrm_external_target">
+                            <div class="wpsl-form-group">
+                                <label class="wpsl-label" for="wpsl_external_target">Comportamento de Abertura (Target)</label>
+                                <select class="wpsl-select" name="wpsl_settings[external_target]" id="wpsl_external_target">
                                     <option value="" <?php selected( $settings['external_target'], '' ); ?>>Manter original (Nenhum)</option>
                                     <option value="_blank" <?php selected( $settings['external_target'], '_blank' ); ?>>Abrir em nova aba (_blank)</option>
                                     <option value="_self" <?php selected( $settings['external_target'], '_self' ); ?>>Abrir na mesma aba (_self)</option>
                                 </select>
-                                <p class="slrm-desc">Define como os links que apontam para fora do seu site serão abertos por padrão.</p>
+                                <p class="wpsl-desc">Define como os links que apontam para fora do seu site serão abertos por padrão.</p>
                             </div>
 
-                            <div class="slrm-form-group">
-                                <label class="slrm-label">Atributos REL Padrão</label>
-                                <div class="slrm-checkbox-grid">
+                            <div class="wpsl-form-group">
+                                <label class="wpsl-label">Atributos REL Padrão</label>
+                                <div class="wpsl-checkbox-grid">
                                     <?php 
                                     $rel_options = array(
                                         'nofollow'   => 'nofollow',
@@ -185,83 +185,83 @@ class Smart_Link_Rel_Manager {
                                     foreach ( $rel_options as $val => $label ) : 
                                         $checked = in_array( $val, (array) $settings['external_rel'] ) ? 'checked' : '';
                                     ?>
-                                        <div class="slrm-checkbox-item">
-                                            <input type="checkbox" name="slrm_settings[external_rel][]" value="<?php echo esc_attr( $val ); ?>" id="ext_rel_<?php echo esc_attr( $val ); ?>" <?php echo $checked; ?>>
+                                        <div class="wpsl-checkbox-item">
+                                            <input type="checkbox" name="wpsl_settings[external_rel][]" value="<?php echo esc_attr( $val ); ?>" id="ext_rel_<?php echo esc_attr( $val ); ?>" <?php echo $checked; ?>>
                                             <label for="ext_rel_<?php echo esc_attr( $val ); ?>"><?php echo esc_html( $label ); ?></label>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
-                                <p class="slrm-desc">Selecione as tags de relacionamento padrão para links externos.</p>
+                                <p class="wpsl-desc">Selecione as tags de relacionamento padrão para links externos.</p>
                             </div>
 
-                            <div class="slrm-form-group">
-                                <label class="slrm-label" for="slrm_external_rel_custom">Atributos REL Personalizados</label>
-                                <input type="text" class="slrm-input-text" name="slrm_settings[external_rel_custom]" id="slrm_external_rel_custom" value="<?php echo esc_attr( $settings['external_rel_custom'] ); ?>" placeholder="ex: external noindex">
-                                <p class="slrm-desc">Insira atributos separados por espaço se precisar de alguma tag personalizada para links externos.</p>
+                            <div class="wpsl-form-group">
+                                <label class="wpsl-label" for="wpsl_external_rel_custom">Atributos REL Personalizados</label>
+                                <input type="text" class="wpsl-input-text" name="wpsl_settings[external_rel_custom]" id="wpsl_external_rel_custom" value="<?php echo esc_attr( $settings['external_rel_custom'] ); ?>" placeholder="ex: external noindex">
+                                <p class="wpsl-desc">Insira atributos separados por espaço se precisar de alguma tag personalizada para links externos.</p>
                             </div>
                         </div>
 
                         <!-- Links Internos -->
-                        <div class="slrm-card">
-                            <h2 class="slrm-card-title">
+                        <div class="wpsl-card">
+                            <h2 class="wpsl-card-title">
                                 <span class="dashicons dashicons-admin-home"></span> Links Internos
                             </h2>
                             
-                            <div class="slrm-form-group">
-                                <label class="slrm-label" for="slrm_internal_target">Comportamento de Abertura (Target)</label>
-                                <select class="slrm-select" name="slrm_settings[internal_target]" id="slrm_internal_target">
+                            <div class="wpsl-form-group">
+                                <label class="wpsl-label" for="wpsl_internal_target">Comportamento de Abertura (Target)</label>
+                                <select class="wpsl-select" name="wpsl_settings[internal_target]" id="wpsl_internal_target">
                                     <option value="" <?php selected( $settings['internal_target'], '' ); ?>>Manter original (Nenhum)</option>
                                     <option value="_blank" <?php selected( $settings['internal_target'], '_blank' ); ?>>Abrir em nova aba (_blank)</option>
                                     <option value="_self" <?php selected( $settings['internal_target'], '_self' ); ?>>Abrir na mesma aba (_self)</option>
                                 </select>
                             </div>
 
-                            <div class="slrm-form-group">
-                                <label class="slrm-label" for="slrm_internal_rel_custom">Atributos REL Personalizados (opcional)</label>
-                                <input type="text" class="slrm-input-text" name="slrm_settings[internal_rel_custom]" id="slrm_internal_rel_custom" value="<?php echo esc_attr( $settings['internal_rel_custom'] ); ?>" placeholder="ex: follow">
-                                <p class="slrm-desc">Insira qualquer atributo REL que queira forçar em links internos (ex: "follow" ou deixe em branco).</p>
+                            <div class="wpsl-form-group">
+                                <label class="wpsl-label" for="wpsl_internal_rel_custom">Atributos REL Personalizados (opcional)</label>
+                                <input type="text" class="wpsl-input-text" name="wpsl_settings[internal_rel_custom]" id="wpsl_internal_rel_custom" value="<?php echo esc_attr( $settings['internal_rel_custom'] ); ?>" placeholder="ex: follow">
+                                <p class="wpsl-desc">Insira qualquer atributo REL que queira forçar em links internos (ex: "follow" ou deixe em branco).</p>
                             </div>
                         </div>
 
                         <!-- Configurações de Filtro de Domínios -->
-                        <div class="slrm-card">
-                            <h2 class="slrm-card-title">
+                        <div class="wpsl-card">
+                            <h2 class="wpsl-card-title">
                                 <span class="dashicons dashicons-admin-settings"></span> Regras de Domínios & Filtros
                             </h2>
 
-                            <div class="slrm-form-group">
-                                <label class="slrm-label" for="slrm_additional_internal_domains">Domínios Internos Adicionais</label>
-                                <textarea class="slrm-textarea" name="slrm_settings[additional_internal_domains]" id="slrm_additional_internal_domains" placeholder="meusubdominio.site.com&#10;blogparceiro.com"><?php echo esc_textarea( $settings['additional_internal_domains'] ); ?></textarea>
-                                <p class="slrm-desc">Um domínio por linha. Links apontando para esses domínios serão classificados como **internos**.</p>
+                            <div class="wpsl-form-group">
+                                <label class="wpsl-label" for="wpsl_additional_internal_domains">Domínios Internos Adicionais</label>
+                                <textarea class="wpsl-textarea" name="wpsl_settings[additional_internal_domains]" id="wpsl_additional_internal_domains" placeholder="meusubdominio.site.com&#10;blogparceiro.com"><?php echo esc_textarea( $settings['additional_internal_domains'] ); ?></textarea>
+                                <p class="wpsl-desc">Um domínio por linha. Links apontando para esses domínios serão classificados como **internos**.</p>
                             </div>
 
-                            <div class="slrm-form-group">
-                                <label class="slrm-label" for="slrm_excluded_domains">Domínios Excluídos de Regras Externas</label>
-                                <textarea class="slrm-textarea" name="slrm_settings[excluded_domains]" id="slrm_excluded_domains" placeholder="google.com&#10;youtube.com"><?php echo esc_textarea( $settings['excluded_domains'] ); ?></textarea>
-                                <p class="slrm-desc">Um domínio por linha. Links externos correspondentes a esta lista não receberão as tags REL ou TARGET externas (serão ignorados).</p>
+                            <div class="wpsl-form-group">
+                                <label class="wpsl-label" for="wpsl_excluded_domains">Domínios Excluídos de Regras Externas</label>
+                                <textarea class="wpsl-textarea" name="wpsl_settings[excluded_domains]" id="wpsl_excluded_domains" placeholder="google.com&#10;youtube.com"><?php echo esc_textarea( $settings['excluded_domains'] ); ?></textarea>
+                                <p class="wpsl-desc">Um domínio por linha. Links externos correspondentes a esta lista não receberão as tags REL ou TARGET externas (serão ignorados).</p>
                             </div>
                         </div>
 
                         <!-- Mecanismo de Atualização -->
-                        <div class="slrm-card">
-                            <h2 class="slrm-card-title">
+                        <div class="wpsl-card">
+                            <h2 class="wpsl-card-title">
                                 <span class="dashicons dashicons-update"></span> Servidor de Atualizações (Auto-Update Engine)
                             </h2>
-                            <div class="slrm-form-group">
-                                <label class="slrm-label" for="slrm_update_json_url">URL do arquivo JSON de Atualização</label>
-                                <input type="url" class="slrm-input-text" name="slrm_settings[update_json_url]" id="slrm_update_json_url" value="<?php echo esc_url( $settings['update_json_url'] ); ?>">
-                                <p class="slrm-desc">O plugin consulta este arquivo JSON para verificar novas versões. Padrão: Repositório GitHub oficial.</p>
+                            <div class="wpsl-form-group">
+                                <label class="wpsl-label" for="wpsl_update_json_url">URL do arquivo JSON de Atualização</label>
+                                <input type="url" class="wpsl-input-text" name="wpsl_settings[update_json_url]" id="wpsl_update_json_url" value="<?php echo esc_url( $settings['update_json_url'] ); ?>">
+                                <p class="wpsl-desc">O plugin consulta este arquivo JSON para verificar novas versões. Padrão: Repositório GitHub oficial.</p>
                             </div>
                         </div>
 
-                        <button type="submit" class="slrm-btn slrm-btn-primary">Salvar Configurações</button>
+                        <button type="submit" class="wpsl-btn wpsl-btn-primary">Salvar Configurações</button>
                     </div>
 
                     <!-- Coluna Lateral Info -->
-                    <div class="slrm-sidebar-column">
-                        <div class="slrm-card">
-                            <h3 class="slrm-card-title"><span class="dashicons dashicons-info"></span> Informações do Plugin</h3>
-                            <ul class="slrm-info-list">
+                    <div class="wpsl-sidebar-column">
+                        <div class="wpsl-card">
+                            <h3 class="wpsl-card-title"><span class="dashicons dashicons-info"></span> Informações do Plugin</h3>
+                            <ul class="wpsl-info-list">
                                 <li>
                                     <span class="dashicons dashicons-admin-links"></span>
                                     <div><strong>Diferenciação Inteligente:</strong> Âncoras, tel:, mailto: e links relativos são tratados sem quebras automáticas.</div>
@@ -296,8 +296,8 @@ class Smart_Link_Rel_Manager {
 
         foreach ( $screens as $screen ) {
             add_meta_box(
-                'slrm_post_settings',
-                'Configurações de Smart Link Rel',
+                'wpsl_post_settings',
+                'WP Smart Links',
                 array( $this, 'render_post_meta_box' ),
                 $screen,
                 'side',
@@ -311,20 +311,20 @@ class Smart_Link_Rel_Manager {
      */
     public function render_post_meta_box( $post ) {
         // Gera o nonce de segurança
-        wp_nonce_field( 'slrm_save_meta_box_data', 'slrm_meta_box_nonce' );
+        wp_nonce_field( 'wpsl_save_meta_box_data', 'wpsl_meta_box_nonce' );
 
         // Recupera valores atuais
-        $mode = get_post_meta( $post->ID, '_slrm_post_mode', true );
+        $mode = get_post_meta( $post->ID, '_wpsl_post_mode', true );
         if ( ! $mode ) {
             $mode = 'global';
         }
 
-        $target = get_post_meta( $post->ID, '_slrm_post_external_target', true );
-        $rel = get_post_meta( $post->ID, '_slrm_post_external_rel', true );
+        $target = get_post_meta( $post->ID, '_wpsl_post_external_target', true );
+        $rel = get_post_meta( $post->ID, '_wpsl_post_external_rel', true );
         if ( ! is_array( $rel ) ) {
             $rel = array();
         }
-        $rel_custom = get_post_meta( $post->ID, '_slrm_post_external_rel_custom', true );
+        $rel_custom = get_post_meta( $post->ID, '_wpsl_post_external_rel_custom', true );
         $keywords_val = get_post_meta( $post->ID, 'ilj_linkdefinition', true );
         $keywords = '';
         if ( is_array( $keywords_val ) ) {
@@ -333,10 +333,10 @@ class Smart_Link_Rel_Manager {
             $keywords = $keywords_val;
         }
         ?>
-        <div class="slrm-metabox-wrap">
-            <div class="slrm-metabox-row">
-                <label class="slrm-metabox-label" for="slrm_post_mode">Modo de Funcionamento</label>
-                <select class="slrm-select" name="slrm_post_mode" id="slrm_post_mode" onchange="toggleSlrmMetaFields(this.value)">
+        <div class="wpsl-metabox-wrap">
+            <div class="wpsl-metabox-row">
+                <label class="wpsl-metabox-label" for="wpsl_post_mode">Modo de Funcionamento</label>
+                <select class="wpsl-select" name="wpsl_post_mode" id="wpsl_post_mode" onchange="toggleWpslMetaFields(this.value)">
                     <option value="global" <?php selected( $mode, 'global' ); ?>>Usar Configurações Globais</option>
                     <option value="override" <?php selected( $mode, 'override' ); ?>>Personalizar para este artigo</option>
                     <option value="disable" <?php selected( $mode, 'disable' ); ?>>Desativar filtro neste artigo</option>
@@ -344,18 +344,18 @@ class Smart_Link_Rel_Manager {
             </div>
 
             <!-- Div de Opções Adicionais (visível apenas ao selecionar personalizar) -->
-            <div id="slrm_override_settings" class="slrm-metabox-options <?php echo ( 'override' !== $mode ) ? 'slrm-disabled' : ''; ?>">
-                <div class="slrm-metabox-row">
-                    <label class="slrm-metabox-label" for="slrm_post_external_target">Abertura de Links Externos</label>
-                    <select class="slrm-select" name="slrm_post_external_target" id="slrm_post_external_target">
+            <div id="wpsl_override_settings" class="wpsl-metabox-options <?php echo ( 'override' !== $mode ) ? 'wpsl-disabled' : ''; ?>">
+                <div class="wpsl-metabox-row">
+                    <label class="wpsl-metabox-label" for="wpsl_post_external_target">Abertura de Links Externos</label>
+                    <select class="wpsl-select" name="wpsl_post_external_target" id="wpsl_post_external_target">
                         <option value="" <?php selected( $target, '' ); ?>>Manter original (Nenhum)</option>
                         <option value="_blank" <?php selected( $target, '_blank' ); ?>>Abrir em nova aba (_blank)</option>
                         <option value="_self" <?php selected( $target, '_self' ); ?>>Abrir na mesma aba (_self)</option>
                     </select>
                 </div>
 
-                <div class="slrm-metabox-row">
-                    <label class="slrm-metabox-label">Atributos REL para Externos</label>
+                <div class="wpsl-metabox-row">
+                    <label class="wpsl-metabox-label">Atributos REL para Externos</label>
                     <?php 
                     $rel_options = array(
                         'nofollow'   => 'nofollow',
@@ -368,49 +368,49 @@ class Smart_Link_Rel_Manager {
                         $checked = in_array( $val, $rel ) ? 'checked' : '';
                     ?>
                         <div style="margin-bottom: 5px;">
-                            <input type="checkbox" name="slrm_post_external_rel[]" value="<?php echo esc_attr( $val ); ?>" id="post_ext_rel_<?php echo esc_attr( $val ); ?>" <?php echo $checked; ?>>
+                            <input type="checkbox" name="wpsl_post_external_rel[]" value="<?php echo esc_attr( $val ); ?>" id="post_ext_rel_<?php echo esc_attr( $val ); ?>" <?php echo $checked; ?>>
                             <label for="post_ext_rel_<?php echo esc_attr( $val ); ?>" style="font-size: 13px; font-weight: 500;"><?php echo esc_html( $label ); ?></label>
                         </div>
                     <?php endforeach; ?>
                 </div>
 
-                <div class="slrm-metabox-row">
-                    <label class="slrm-metabox-label" for="slrm_post_external_rel_custom">Atributos REL Personalizados</label>
-                    <input type="text" class="slrm-input-text" name="slrm_post_external_rel_custom" id="slrm_post_external_rel_custom" value="<?php echo esc_attr( $rel_custom ); ?>" placeholder="ex: external noindex" style="padding: 6px 10px; font-size:12px;">
+                <div class="wpsl-metabox-row">
+                    <label class="wpsl-metabox-label" for="wpsl_post_external_rel_custom">Atributos REL Personalizados</label>
+                    <input type="text" class="wpsl-input-text" name="wpsl_post_external_rel_custom" id="wpsl_post_external_rel_custom" value="<?php echo esc_attr( $rel_custom ); ?>" placeholder="ex: external noindex" style="padding: 6px 10px; font-size:12px;">
                 </div>
             </div>
 
             <!-- Palavras-chave para Linkagem Automática -->
-            <div class="slrm-metabox-row" style="margin-top: 15px; border-top: 1px solid var(--slrm-border); padding-top: 15px;">
-                <label class="slrm-metabox-label">Palavras-chave Auto-Link</label>
+            <div class="wpsl-metabox-row" style="margin-top: 15px; border-top: 1px solid var(--wpsl-border); padding-top: 15px;">
+                <label class="wpsl-metabox-label">Palavras-chave Auto-Link</label>
                 
                 <!-- Container de Badges de Tags -->
-                <div class="slrm-tags-container" id="slrm_tags_container"></div>
+                <div class="wpsl-tags-container" id="wpsl_tags_container"></div>
                 
                 <!-- Input de digitação -->
-                <input type="text" class="slrm-input-text" id="slrm_tag_type_input" placeholder="Digite e aperte Enter..." style="font-size:12px; padding: 6px 10px;">
+                <input type="text" class="wpsl-input-text" id="wpsl_tag_type_input" placeholder="Digite e aperte Enter..." style="font-size:12px; padding: 6px 10px;">
                 
                 <!-- Input oculto que armazena a string final de palavras-chave separadas por vírgula -->
-                <input type="hidden" name="slrm_post_keywords" id="slrm_post_keywords" value="<?php echo esc_attr( $keywords ); ?>">
+                <input type="hidden" name="wpsl_post_keywords" id="wpsl_post_keywords" value="<?php echo esc_attr( $keywords ); ?>">
                 
-                <p class="slrm-desc" style="margin-top: 6px; font-size:11px;">Digite o termo e aperte **Enter** ou **Vírgula** para adicionar. Depois, clique em **Atualizar** para salvar.</p>
+                <p class="wpsl-desc" style="margin-top: 6px; font-size:11px;">Digite o termo e aperte **Enter** ou **Vírgula** para adicionar. Depois, clique em **Atualizar** para salvar.</p>
             </div>
         </div>
 
         <script>
-            function toggleSlrmMetaFields(value) {
-                var el = document.getElementById('slrm_override_settings');
+            function toggleWpslMetaFields(value) {
+                var el = document.getElementById('wpsl_override_settings');
                 if (value === 'override') {
-                    el.classList.remove('slrm-disabled');
+                    el.classList.remove('wpsl-disabled');
                 } else {
-                    el.classList.add('slrm-disabled');
+                    el.classList.add('wpsl-disabled');
                 }
             }
 
             document.addEventListener('DOMContentLoaded', function() {
-                var hiddenInput = document.getElementById('slrm_post_keywords');
-                var typeInput = document.getElementById('slrm_tag_type_input');
-                var tagsContainer = document.getElementById('slrm_tags_container');
+                var hiddenInput = document.getElementById('wpsl_post_keywords');
+                var typeInput = document.getElementById('wpsl_tag_type_input');
+                var tagsContainer = document.getElementById('wpsl_tags_container');
                 var tagsList = [];
 
                 // Inicializa a lista de tags com base no valor atual do input oculto
@@ -424,8 +424,8 @@ class Smart_Link_Rel_Manager {
                     
                     tagsList.forEach(function(tag, index) {
                         var badge = document.createElement('div');
-                        badge.className = 'slrm-tag-badge';
-                        badge.innerHTML = '<span>' + escapeHTML(tag) + '</span><span class="slrm-remove-tag" data-index="' + index + '">&times;</span>';
+                        badge.className = 'wpsl-tag-badge';
+                        badge.innerHTML = '<span>' + escapeHTML(tag) + '</span><span class="wpsl-remove-tag" data-index="' + index + '">&times;</span>';
                         tagsContainer.appendChild(badge);
                     });
 
@@ -470,7 +470,7 @@ class Smart_Link_Rel_Manager {
 
                 if (tagsContainer) {
                     tagsContainer.addEventListener('click', function(e) {
-                        if (e.target.classList.contains('slrm-remove-tag')) {
+                        if (e.target.classList.contains('wpsl-remove-tag')) {
                             var index = parseInt(e.target.getAttribute('data-index'), 10);
                             tagsList.splice(index, 1);
                             renderTags();
@@ -491,14 +491,14 @@ class Smart_Link_Rel_Manager {
     public function save_post_meta_box_data( $post_id ) {
         // Debug POST data
         if ( isset( $_POST ) && ! empty( $_POST ) ) {
-            error_log( 'SLRM save_post triggered for ID ' . $post_id . ' with POST: ' . print_r( $_POST, true ) );
+            error_log( 'WPSL save_post triggered for ID ' . $post_id . ' with POST: ' . print_r( $_POST, true ) );
         }
 
         // Verifica o nonce
-        if ( ! isset( $_POST['slrm_meta_box_nonce'] ) ) {
+        if ( ! isset( $_POST['wpsl_meta_box_nonce'] ) ) {
             return;
         }
-        if ( ! wp_verify_nonce( $_POST['slrm_meta_box_nonce'], 'slrm_save_meta_box_data' ) ) {
+        if ( ! wp_verify_nonce( $_POST['wpsl_meta_box_nonce'], 'wpsl_save_meta_box_data' ) ) {
             return;
         }
 
@@ -519,30 +519,30 @@ class Smart_Link_Rel_Manager {
         }
 
         // Salva os dados
-        if ( isset( $_POST['slrm_post_mode'] ) ) {
-            $mode = sanitize_text_field( $_POST['slrm_post_mode'] );
-            update_post_meta( $post_id, '_slrm_post_mode', $mode );
+        if ( isset( $_POST['wpsl_post_mode'] ) ) {
+            $mode = sanitize_text_field( $_POST['wpsl_post_mode'] );
+            update_post_meta( $post_id, '_wpsl_post_mode', $mode );
         }
 
-        if ( isset( $_POST['slrm_post_external_target'] ) ) {
-            $target = sanitize_text_field( $_POST['slrm_post_external_target'] );
-            update_post_meta( $post_id, '_slrm_post_external_target', $target );
+        if ( isset( $_POST['wpsl_post_external_target'] ) ) {
+            $target = sanitize_text_field( $_POST['wpsl_post_external_target'] );
+            update_post_meta( $post_id, '_wpsl_post_external_target', $target );
         }
 
-        if ( isset( $_POST['slrm_post_external_rel'] ) ) {
-            $rel = array_map( 'sanitize_text_field', $_POST['slrm_post_external_rel'] );
-            update_post_meta( $post_id, '_slrm_post_external_rel', $rel );
+        if ( isset( $_POST['wpsl_post_external_rel'] ) ) {
+            $rel = array_map( 'sanitize_text_field', $_POST['wpsl_post_external_rel'] );
+            update_post_meta( $post_id, '_wpsl_post_external_rel', $rel );
         } else {
-            update_post_meta( $post_id, '_slrm_post_external_rel', array() );
+            update_post_meta( $post_id, '_wpsl_post_external_rel', array() );
         }
 
-        if ( isset( $_POST['slrm_post_external_rel_custom'] ) ) {
-            $rel_custom = sanitize_text_field( $_POST['slrm_post_external_rel_custom'] );
-            update_post_meta( $post_id, '_slrm_post_external_rel_custom', $rel_custom );
+        if ( isset( $_POST['wpsl_post_external_rel_custom'] ) ) {
+            $rel_custom = sanitize_text_field( $_POST['wpsl_post_external_rel_custom'] );
+            update_post_meta( $post_id, '_wpsl_post_external_rel_custom', $rel_custom );
         }
 
-        if ( isset( $_POST['slrm_post_keywords'] ) ) {
-            $keywords_str = sanitize_text_field( $_POST['slrm_post_keywords'] );
+        if ( isset( $_POST['wpsl_post_keywords'] ) ) {
+            $keywords_str = sanitize_text_field( $_POST['wpsl_post_keywords'] );
             $keywords_array = array_filter( array_map( 'trim', explode( ',', $keywords_str ) ) );
             update_post_meta( $post_id, 'ilj_linkdefinition', $keywords_array );
             $this->clear_keyword_cache();
@@ -553,14 +553,14 @@ class Smart_Link_Rel_Manager {
      * Limpa o cache de palavras-chave
      */
     public function clear_keyword_cache() {
-        delete_transient( 'slrm_keyword_links_map' );
+        delete_transient( 'wpsl_keyword_links_map' );
     }
 
     /**
      * Obtém o mapeamento de Palavra-chave -> URL ordenado por tamanho
      */
     private function get_keyword_links_map() {
-        $map = get_transient( 'slrm_keyword_links_map' );
+        $map = get_transient( 'wpsl_keyword_links_map' );
         if ( false === $map ) {
             $map = array();
             
@@ -607,7 +607,7 @@ class Smart_Link_Rel_Manager {
                 return strlen( $b ) - strlen( $a );
             } );
 
-            set_transient( 'slrm_keyword_links_map', $map, DAY_IN_SECONDS );
+            set_transient( 'wpsl_keyword_links_map', $map, DAY_IN_SECONDS );
         }
         return $map;
     }
@@ -699,7 +699,7 @@ class Smart_Link_Rel_Manager {
         $post_id = get_the_ID();
         if ( $post_id ) {
             // Verifica o modo configurado para este post específico
-            $post_mode = get_post_meta( $post_id, '_slrm_post_mode', true );
+            $post_mode = get_post_meta( $post_id, '_wpsl_post_mode', true );
             if ( 'disable' === $post_mode ) {
                 return $content;
             }
@@ -750,7 +750,7 @@ class Smart_Link_Rel_Manager {
 
         // Carrega configurações correspondentes (com suporte a override por post)
         $post_id = get_the_ID();
-        $post_mode = $post_id ? get_post_meta( $post_id, '_slrm_post_mode', true ) : 'global';
+        $post_mode = $post_id ? get_post_meta( $post_id, '_wpsl_post_mode', true ) : 'global';
 
         $target = '';
         $rel_to_add = array();
@@ -769,9 +769,9 @@ class Smart_Link_Rel_Manager {
             // Links Externos normais
             if ( 'override' === $post_mode && $post_id ) {
                 // Usa overrides do post
-                $target = get_post_meta( $post_id, '_slrm_post_external_target', true );
-                $rel_to_add = (array) get_post_meta( $post_id, '_slrm_post_external_rel', true );
-                $rel_custom = get_post_meta( $post_id, '_slrm_post_external_rel_custom', true );
+                $target = get_post_meta( $post_id, '_wpsl_post_external_target', true );
+                $rel_to_add = (array) get_post_meta( $post_id, '_wpsl_post_external_rel', true );
+                $rel_custom = get_post_meta( $post_id, '_wpsl_post_external_rel_custom', true );
             } else {
                 // Usa globais
                 $target = $this->get_option( 'external_target' );
@@ -927,7 +927,7 @@ class Smart_Link_Rel_Manager {
             $plugin_slug = plugin_basename( __FILE__ );
             
             $obj = new stdClass();
-            $obj->slug = 'smart-link-rel-manager';
+            $obj->slug = 'wp-smart-links';
             $obj->plugin = $plugin_slug;
             $obj->new_version = $remote_data->version;
             $obj->url = isset( $remote_data->homepage ) ? $remote_data->homepage : '';
@@ -945,7 +945,7 @@ class Smart_Link_Rel_Manager {
      * Preenche os detalhes do plugin no modal de visualização do WordPress (View Details)
      */
     public function get_plugin_info_modal( $false, $action, $args ) {
-        if ( isset( $args->slug ) && 'smart-link-rel-manager' === $args->slug ) {
+        if ( isset( $args->slug ) && 'wp-smart-links' === $args->slug ) {
             $json_url = $this->get_option( 'update_json_url' );
             if ( empty( $json_url ) ) {
                 return $false;
@@ -964,10 +964,10 @@ class Smart_Link_Rel_Manager {
             $plugin_slug = plugin_basename( __FILE__ );
 
             $info = new stdClass();
-            $info->name = 'Smart Link Rel Manager';
-            $info->slug = 'smart-link-rel-manager';
+            $info->name = 'WP Smart Links';
+            $info->slug = 'wp-smart-links';
             $info->version = $remote_data->version;
-            $info->author = 'Antigravity AI';
+            $info->author = 'aoundigital';
             $info->homepage = isset( $remote_data->homepage ) ? $remote_data->homepage : '';
             $info->download_link = isset( $remote_data->download_url ) ? $remote_data->download_url : '';
             $info->tested = isset( $remote_data->tested ) ? $remote_data->tested : '';
@@ -986,4 +986,4 @@ class Smart_Link_Rel_Manager {
 }
 
 // Inicializa o plugin
-add_action( 'plugins_loaded', array( 'Smart_Link_Rel_Manager', 'get_instance' ) );
+add_action( 'plugins_loaded', array( 'WP_Smart_Links', 'get_instance' ) );
